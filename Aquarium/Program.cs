@@ -20,40 +20,34 @@ namespace Aquarium
 
     class Fish
     {
-        private int _age = 0;
         private int _maxAge = 10;
 
-        private string _deadMessage = "Я мертвая рыбка.";
-
-        public bool IsAlive => _age < _maxAge;
-        private string AliveMessage => $"Я рыбка, мой возраст - {_age}.";
+        public bool IsAlive => Age < _maxAge;
+        public int Age { get; private set; }
 
         public void Grow()
         {
             if (IsAlive == false)
                 return;
 
-            _age++;
+            Age++;
         }
-
-        public string TellStatus() =>
-            IsAlive ? AliveMessage : _deadMessage;
     }
 
     class Aquarium
     {
-        private List<Fish> _fish = new List<Fish>();
+        private List<Fish> _fishes = new List<Fish>();
         private int _capacity = 5;
+        private string _deadFishStatus = "x_x";
 
-        private bool IsFull =>
-            _capacity <= _fish.Count;
+        private bool IsFull => _capacity <= _fishes.Count;
 
-        public string[] TellFishStatus()
+        public string[] GetFishesStatus()
         {
             string[] fishStatus = new string[_capacity];
 
-            for (int i = 0; i < _fish.Count; i++)
-                fishStatus[i] = _fish[i].TellStatus();
+            for (int i = 0; i < _fishes.Count; i++)            
+                fishStatus[i] = _fishes[i].IsAlive ? GetFishStatus(_fishes[i].Age) : _deadFishStatus;            
 
             return fishStatus;
         }
@@ -61,14 +55,17 @@ namespace Aquarium
         public void AddFish(Fish fish)
         {
             if (IsFull == false)
-                _fish.Add(fish);
+                _fishes.Add(fish);
         }
 
         public void RemoveDeadFish() =>
-            _fish.RemoveAll(fish => fish.IsAlive == false);
+            _fishes.RemoveAll(fish => fish.IsAlive == false);
 
         public void Live() =>
-            _fish.ForEach(fish => fish.Grow());
+            _fishes.ForEach(fish => fish.Grow());
+
+        private string GetFishStatus(int age) =>
+            $"Я рыбка, мой возраст - {age}.";
     }
 
     class Menu
@@ -169,7 +166,7 @@ namespace Aquarium
         }
 
         public Action GiveDrawAquariumAction() =>
-            () => Renderer.DrawAquarium(_aquarium.TellFishStatus());
+            () => Renderer.DrawAquarium(_aquarium.GetFishesStatus());
 
         private void BuyFish() =>
             _aquarium.AddFish(new Fish());
@@ -183,14 +180,14 @@ namespace Aquarium
 
     class Renderer
     {
-        private static ConsoleColor _backgroundColor = ConsoleColor.White;
-        private static ConsoleColor _foregroundColor = ConsoleColor.Black;
+        private static ConsoleColor s_backgroundColor = ConsoleColor.White;
+        private static ConsoleColor s_foregroundColor = ConsoleColor.Black;
 
-        private static int aquariumCursorPositionY = 10;
-        private static int _lineSize = 30;
+        private static int s_aquariumCursorPositionY = 10;
+        private static int s_lineSize = 30;
 
-        private static char _aquariumBorder = '-';
-        private static char _spaceChar = ' ';
+        private static char s_aquariumBorder = '-';
+        private static char s_spaceChar = ' ';
 
         public static void DrawMenu(string[] items, int index)
         {
@@ -205,26 +202,26 @@ namespace Aquarium
 
         public static void DrawAquarium(string[] infoArray)
         {
-            Console.CursorTop = aquariumCursorPositionY;
+            Console.CursorTop = s_aquariumCursorPositionY;
 
-            Console.WriteLine(new string(_aquariumBorder, _lineSize));
+            Console.WriteLine(new string(s_aquariumBorder, s_lineSize));
 
             foreach (string info in infoArray)
             {
-                Console.Write(new string(_spaceChar, _lineSize));
+                Console.Write(new string(s_spaceChar, s_lineSize));
 
                 Console.CursorLeft = 0;
 
                 Console.WriteLine(info);
             }
 
-            Console.WriteLine(new string(_aquariumBorder, _lineSize));
+            Console.WriteLine(new string(s_aquariumBorder, s_lineSize));
         }
 
         private static void WriteColoredText(string text)
         {
-            Console.ForegroundColor = _foregroundColor;
-            Console.BackgroundColor = _backgroundColor;
+            Console.ForegroundColor = s_foregroundColor;
+            Console.BackgroundColor = s_backgroundColor;
 
             Console.WriteLine(text);
 
