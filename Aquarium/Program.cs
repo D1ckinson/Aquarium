@@ -46,8 +46,8 @@ namespace Aquarium
         {
             string[] fishStatus = new string[_capacity];
 
-            for (int i = 0; i < _fishes.Count; i++)            
-                fishStatus[i] = _fishes[i].IsAlive ? GetFishStatus(_fishes[i].Age) : _deadFishStatus;            
+            for (int i = 0; i < _fishes.Count; i++)
+                fishStatus[i] = _fishes[i].IsAlive ? GetFishStatus(_fishes[i].Age) : _deadFishStatus;
 
             return fishStatus;
         }
@@ -89,27 +89,6 @@ namespace Aquarium
             _drawAquarium = drawAquarium;
         }
 
-        private int ItemIndex
-        {
-            get
-            {
-                return _itemIndex;
-            }
-
-            set
-            {
-                int lastIndex = _items.Length - 1;
-
-                if (value > lastIndex)
-                    value = lastIndex;
-
-                if (value < 0)
-                    value = 0;
-
-                _itemIndex = value;
-            }
-        }
-
         public void Work()
         {
             _isRunning = true;
@@ -124,16 +103,29 @@ namespace Aquarium
             }
         }
 
+        private void SetItemIndex(int index)
+        {
+            int lastIndex = _items.Length - 1;
+
+            if (index > lastIndex)
+                index = lastIndex;
+
+            if (index < 0)
+                index = 0;
+
+            _itemIndex = index;
+        }
+
         private void ReadKey()
         {
             switch (Console.ReadKey(true).Key)
             {
                 case MoveSelectionDown:
-                    ItemIndex++;
+                    SetItemIndex(_itemIndex++);
                     break;
 
                 case MoveSelectionUp:
-                    ItemIndex--;
+                    SetItemIndex(_itemIndex--);
                     break;
 
                 case ConfirmSelection:
