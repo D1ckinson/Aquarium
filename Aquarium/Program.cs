@@ -23,6 +23,7 @@ namespace Aquarium
         private int _maxAge = 10;
 
         public bool IsAlive => Age < _maxAge;
+
         public int Age { get; private set; }
 
         public void Grow()
@@ -121,11 +122,11 @@ namespace Aquarium
             switch (Console.ReadKey(true).Key)
             {
                 case MoveSelectionDown:
-                    SetItemIndex(_itemIndex++);
+                    SetItemIndex(_itemIndex + 1);
                     break;
 
                 case MoveSelectionUp:
-                    SetItemIndex(_itemIndex--);
+                    SetItemIndex(_itemIndex - 1);
                     break;
 
                 case ConfirmSelection:
