@@ -23,7 +23,6 @@ namespace Aquarium
         private int _maxAge = 10;
 
         public bool IsAlive => Age < _maxAge;
-
         public int Age { get; private set; }
 
         public void Grow()
