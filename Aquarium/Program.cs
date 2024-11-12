@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Aquarium
 {
@@ -8,29 +7,83 @@ namespace Aquarium
     {
         static void Main()
         {
-            Console.CursorVisible = false;
-
-            Aquarium aquarium = new Aquarium();
-            ActionBuilder actionBuilder = new ActionBuilder(aquarium);
-            Menu menu = new Menu(actionBuilder.GiveActions(), actionBuilder.GiveDrawAquariumAction());
-
-            menu.Work();
+            Game game = new Game();
+            game.Work();
         }
     }
 
-    class Fish
+
+    class Game
     {
-        private int _maxAge = 10;
+        private Aquarium _aquarium;
 
-        public bool IsAlive => Age < _maxAge;
-        public int Age { get; private set; }
-
-        public void Grow()
+        public Game()
         {
-            if (IsAlive == false)
-                return;
+            _aquarium = new Aquarium();
+        }
 
-            Age++;
+        public void Work()
+        {
+            const string BuyFishCommand = "1";
+            const string RemoveDeadFishCommand = "2";
+            const string LiveCommand = "3";
+            const string ExitCommand = "4";
+
+            bool isWork = true;
+
+            while (isWork)
+            {
+                DrawAquarium(_aquarium.GetFishesStatus());
+
+                Console.WriteLine(
+                    $"{BuyFishCommand} - Купить новую рыбку\n" +
+                    $"{RemoveDeadFishCommand} - Убрать мертвых рыбок\n" +
+                    $"{LiveCommand} - Позволить рыбкам пожить...\n" +
+                    $"{ExitCommand} - Выход\n");
+
+                switch (ReadCommand())
+                {
+                    case BuyFishCommand:
+                        _aquarium.AddFish(new Fish());
+                        break;
+
+                    case RemoveDeadFishCommand:
+                        _aquarium.RemoveDeadFish();
+                        break;
+
+                    case LiveCommand:
+                        _aquarium.Live();
+                        break;
+
+                    case ExitCommand:
+                        isWork = false;
+                        break;
+
+                    default:
+                        break;
+                }
+
+                Console.Clear();
+            }
+        }
+
+        private void DrawAquarium(List<string> fishesInfo)
+        {
+            int lineSize = 30;
+            char aquariumBorder = '-';
+
+            Console.WriteLine("Аквариум:");
+            Console.WriteLine(new string(aquariumBorder, lineSize));
+
+            fishesInfo.ForEach(info => Console.WriteLine(info));
+            Console.WriteLine(new string(aquariumBorder, lineSize) + "\n");
+        }
+
+        private string ReadCommand()
+        {
+            Console.Write("Введите команду: ");
+
+            return Console.ReadLine();
         }
     }
 
@@ -38,16 +91,19 @@ namespace Aquarium
     {
         private List<Fish> _fishes = new List<Fish>();
         private int _capacity = 5;
-        private string _deadFishStatus = "x_x";
 
-        private bool IsFull => _capacity <= _fishes.Count;
+        private bool IsFull => _capacity == _fishes.Count;
 
-        public string[] GetFishesStatus()
+        public List<string> GetFishesStatus()
         {
-            string[] fishStatus = new string[_capacity];
+            string deadFishStatus = "x_x";
+            List<string> fishStatus = new List<string>();
 
-            for (int i = 0; i < _fishes.Count; i++)
-                fishStatus[i] = _fishes[i].IsAlive ? GetFishStatus(_fishes[i].Age) : _deadFishStatus;
+            foreach (Fish fish in _fishes)
+            {
+                string status = fish.IsAlive ? GetFishStatus(fish) : deadFishStatus;
+                fishStatus.Add(status);
+            }
 
             return fishStatus;
         }
@@ -64,160 +120,23 @@ namespace Aquarium
         public void Live() =>
             _fishes.ForEach(fish => fish.Grow());
 
-        private string GetFishStatus(int age) =>
-            $"Я рыбка, мой возраст - {age}.";
+        private string GetFishStatus(Fish fish) =>
+            $"Я рыбка, мой возраст - {fish.Age}.";
     }
 
-    class Menu
+    class Fish
     {
-        private const ConsoleKey MoveSelectionUp = ConsoleKey.UpArrow;
-        private const ConsoleKey MoveSelectionDown = ConsoleKey.DownArrow;
-        private const ConsoleKey ConfirmSelection = ConsoleKey.Enter;
+        private int _maxAge = 10;
 
-        private int _itemIndex = 0;
-        private bool _isRunning;
-        private string[] _items;
+        public bool IsAlive => Age < _maxAge;
+        public int Age { get; private set; }
 
-        private Dictionary<string, Action> _actions = new Dictionary<string, Action>();
-        private Action _drawAquarium;
-
-        public Menu(Dictionary<string, Action> actions, Action drawAquarium)
+        public void Grow()
         {
-            _actions = actions;
-            _actions.Add("Выход", Exit);
-            _items = _actions.Keys.ToArray();
-            _drawAquarium = drawAquarium;
-        }
+            if (IsAlive == false)
+                return;
 
-        public void Work()
-        {
-            _isRunning = true;
-
-            while (_isRunning)
-            {
-                Renderer.DrawMenu(_items, _itemIndex);
-
-                _drawAquarium.Invoke();
-
-                ReadKey();
-            }
-        }
-
-        private void SetItemIndex(int index)
-        {
-            int lastIndex = _items.Length - 1;
-
-            if (index > lastIndex)
-                index = lastIndex;
-
-            if (index < 0)
-                index = 0;
-
-            _itemIndex = index;
-        }
-
-        private void ReadKey()
-        {
-            switch (Console.ReadKey(true).Key)
-            {
-                case MoveSelectionDown:
-                    SetItemIndex(_itemIndex + 1);
-                    break;
-
-                case MoveSelectionUp:
-                    SetItemIndex(_itemIndex - 1);
-                    break;
-
-                case ConfirmSelection:
-                    _actions[_items[_itemIndex]].Invoke();
-                    break;
-            }
-        }
-
-        private void Exit() =>
-            _isRunning = false;
-    }
-
-    class ActionBuilder
-    {
-        private Aquarium _aquarium;
-
-        public ActionBuilder(Aquarium aquarium) =>
-            _aquarium = aquarium;
-
-        public Dictionary<string, Action> GiveActions()
-        {
-            Dictionary<string, Action> actions = new Dictionary<string, Action>
-            {
-                { "Купить новую рыбку.", BuyFish },
-                { "Убрать мертвых рыбок.", RemoveDeadFish },
-                { "Позволить рыбкам пожить...", LiveYear }
-            };
-
-            return actions;
-        }
-
-        public Action GiveDrawAquariumAction() =>
-            () => Renderer.DrawAquarium(_aquarium.GetFishesStatus());
-
-        private void BuyFish() =>
-            _aquarium.AddFish(new Fish());
-
-        private void RemoveDeadFish() =>
-            _aquarium.RemoveDeadFish();
-
-        private void LiveYear() =>
-            _aquarium.Live();
-    }
-
-    class Renderer
-    {
-        private static ConsoleColor s_backgroundColor = ConsoleColor.White;
-        private static ConsoleColor s_foregroundColor = ConsoleColor.Black;
-
-        private static int s_aquariumCursorPositionY = 10;
-        private static int s_lineSize = 30;
-
-        private static char s_aquariumBorder = '-';
-        private static char s_spaceChar = ' ';
-
-        public static void DrawMenu(string[] items, int index)
-        {
-            Console.SetCursorPosition(0, 0);
-
-            for (int i = 0; i < items.Length; i++)
-                if (i == index)
-                    WriteColoredText(items[i]);
-                else
-                    Console.WriteLine(items[i]);
-        }
-
-        public static void DrawAquarium(string[] infoArray)
-        {
-            Console.CursorTop = s_aquariumCursorPositionY;
-
-            Console.WriteLine(new string(s_aquariumBorder, s_lineSize));
-
-            foreach (string info in infoArray)
-            {
-                Console.Write(new string(s_spaceChar, s_lineSize));
-
-                Console.CursorLeft = 0;
-
-                Console.WriteLine(info);
-            }
-
-            Console.WriteLine(new string(s_aquariumBorder, s_lineSize));
-        }
-
-        private static void WriteColoredText(string text)
-        {
-            Console.ForegroundColor = s_foregroundColor;
-            Console.BackgroundColor = s_backgroundColor;
-
-            Console.WriteLine(text);
-
-            Console.ResetColor();
+            Age++;
         }
     }
 }
