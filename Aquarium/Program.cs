@@ -12,7 +12,6 @@ namespace Aquarium
         }
     }
 
-
     class Game
     {
         private Aquarium _aquarium;
@@ -52,7 +51,7 @@ namespace Aquarium
                         break;
 
                     case LiveCommand:
-                        _aquarium.Live();
+                        _aquarium.SkipTime();
                         break;
 
                     case ExitCommand:
@@ -101,7 +100,7 @@ namespace Aquarium
 
             foreach (Fish fish in _fishes)
             {
-                string status = fish.IsAlive ? GetFishStatus(fish) : deadFishStatus;
+                string status = fish.IsAlive ? fish.TellStatus() : deadFishStatus;
                 fishStatus.Add(status);
             }
 
@@ -117,26 +116,26 @@ namespace Aquarium
         public void RemoveDeadFish() =>
             _fishes.RemoveAll(fish => fish.IsAlive == false);
 
-        public void Live() =>
-            _fishes.ForEach(fish => fish.Grow());
-
-        private string GetFishStatus(Fish fish) =>
-            $"Я рыбка, мой возраст - {fish.Age}.";
+        public void SkipTime() =>
+            _fishes.ForEach(fish => fish.GrowUp());
     }
 
     class Fish
     {
-        private int _maxAge = 10;
+        private int _maxAge = 5;
 
         public bool IsAlive => Age < _maxAge;
         public int Age { get; private set; }
 
-        public void Grow()
+        public void GrowUp()
         {
             if (IsAlive == false)
                 return;
 
             Age++;
         }
+
+        public string TellStatus() =>
+            $"Я рыбка, мой возраст - {Age}.";
     }
 }
